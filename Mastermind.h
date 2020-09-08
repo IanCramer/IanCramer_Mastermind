@@ -90,10 +90,10 @@ int Mastermind::getCodeLength()
     
     while (true)
     {
-        cout << endl << "Please enter code length (4, 6, 8): ";
+        cout << endl << "Please enter code length (1 digit integer): ";
         cin >> in;
         
-        if (in[0] == '4' || in[0] == '6' || in[0] == '8')
+        if (isdigit(in[0]))
             return int(in[0]) - '0';
         
         cout << "Invalid Code Length" << endl;
