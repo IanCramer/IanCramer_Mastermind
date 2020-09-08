@@ -32,8 +32,8 @@ public:
 private:
 	// Member Functions
 	bool allowDuplicates();
-    int getCodeLength();
-    string getCode();
+	int getCodeLength();
+	string getCode();
 
 
 	void generateAllCodes();
@@ -66,14 +66,14 @@ private:
 Codebreaker::Codebreaker()
 {
 	// Get Code Length
-    codeLength = getCodeLength();
-    // Allow Duplicates?
-    duplicates = allowDuplicates();
-    // Calculate Number of Possible Codes
-    cout << "Number of Possible Codes: " << calcNumPosCodes() << endl;
-    // Get Code
-    mCode = getCode();
-    // Generate All Codes
+	codeLength = getCodeLength();
+	// Allow Duplicates?
+	duplicates = allowDuplicates();
+	// Calculate Number of Possible Codes
+	cout << "Number of Possible Codes: " << calcNumPosCodes() << endl;
+	// Get Code
+	mCode = getCode();
+	// Generate All Codes
 	generateAllCodes();
 
 	// Start Guessing
@@ -104,20 +104,20 @@ Codebreaker::Codebreaker()
 
 int Codebreaker::getCodeLength()
 {
-    string in;
-    
-    while (true)
-    {
-        cout << endl << "Please enter code length (4, 5, 6): ";
-        cin >> in;
-        
-        if (in[0] == '4' || in[0] == '5' || in[0] == '6')
-            return int(in[0]) - '0';
-        
-        cout << "Invalid Code Length" << endl;
-    }
-    
-    return 4;
+	string in;
+	
+	while (true)
+	{
+		cout << endl << "Please enter code length (4, 5, 6): ";
+		cin >> in;
+		
+		if (in[0] == '4' || in[0] == '5' || in[0] == '6')
+			return int(in[0]) - '0';
+		
+		cout << "Invalid Code Length" << endl;
+	}
+	
+	return 4;
 }
 
 bool Codebreaker::allowDuplicates()
@@ -128,22 +128,22 @@ bool Codebreaker::allowDuplicates()
 		return false;
 	}
 
-    string in;
-    
-    while (true)
-    {
-        cout << endl << "Allow Duplicates?" << endl << "1. Yes" << endl << "2. No" << endl;
-        cin >> in;
-        
-        if (in[0] == '1' || tolower(in[0]) == 'y')
-            return true;
-        else if (in[0] == '2' || tolower(in[0]) == 'n')
-            return false;
+	string in;
+	
+	while (true)
+	{
+		cout << endl << "Allow Duplicates?" << endl << "1. Yes" << endl << "2. No" << endl;
+		cin >> in;
+		
+		if (in[0] == '1' || tolower(in[0]) == 'y')
+			return true;
+		else if (in[0] == '2' || tolower(in[0]) == 'n')
+			return false;
 
-        cout << "Invalid Response" << endl;
-    }
+		cout << "Invalid Response" << endl;
+	}
 
-    return false;
+	return false;
 }
 
 string Codebreaker::getCode()
@@ -196,15 +196,15 @@ bool Codebreaker::checkDuplicates(string code)
 	if (duplicates)
 		return false;
 
-    // If duplicates not allowed, check for duplicates
-    for (int i = 0; i < code.length(); i++)
-    	for (int j = i + 1; j < code.length(); j++)
-    		if (code[i] == code[j])
-    			// Duplicate found
-    			return true;
+	// If duplicates not allowed, check for duplicates
+	for (int i = 0; i < code.length(); i++)
+		for (int j = i + 1; j < code.length(); j++)
+			if (code[i] == code[j])
+				// Duplicate found
+				return true;
 
-    // No duplicates found
-    return false;
+	// No duplicates found
+	return false;
 }
 
 
@@ -213,27 +213,27 @@ string Codebreaker::firstGuess()
 	guess = "abcd";
 	string hint = "";
 	string code = mCode;
-    
-    // Check correct letters in correct place
-    for (int i = 0; i < codeLength; i++)
-        if (guess[i] == code[i])
-        {
-            hint += '*';
-            guess[i] = 'x';
-            code[i] = 'y';
-        }
-    
-    // Check correct letters in the wrong place
-    for (int i = 0; i < codeLength; i++)
-        for (int j = 0; j < codeLength; j++)
-            if (guess[i] == code[j] && i != j)
-            {
-                hint += '+';
-                guess[i] = 'x';
-                code[j] = 'y';
-            }
-    
-    return hint;
+	
+	// Check correct letters in correct place
+	for (int i = 0; i < codeLength; i++)
+		if (guess[i] == code[i])
+		{
+			hint += '*';
+			guess[i] = 'x';
+			code[i] = 'y';
+		}
+	
+	// Check correct letters in the wrong place
+	for (int i = 0; i < codeLength; i++)
+		for (int j = 0; j < codeLength; j++)
+			if (guess[i] == code[j] && i != j)
+			{
+				hint += '+';
+				guess[i] = 'x';
+				code[j] = 'y';
+			}
+	
+	return hint;
 }
 
 string Codebreaker::makeGuess()
@@ -248,25 +248,25 @@ string Codebreaker::checkGuess(string guess, string code)
 	string hint;
 
 	// Check correct letters in correct place
-    for (int i = 0; i < codeLength; i++)
-        if (guess[i] == code[i])
-        {
-            hint += '*';
-            guess[i] = 'x';
-            code[i] = 'y';
-        }
-    
-    // Check correct letters in the wrong place
-    for (int i = 0; i < codeLength; i++)
-        for (int j = 0; j < codeLength; j++)
-            if (guess[i] == code[j] && i != j)
-            {
-                hint += '+';
-                guess[i] = 'x';
-                code[j] = 'y';
-            }
-    
-    return hint;
+	for (int i = 0; i < codeLength; i++)
+		if (guess[i] == code[i])
+		{
+			hint += '*';
+			guess[i] = 'x';
+			code[i] = 'y';
+		}
+	
+	// Check correct letters in the wrong place
+	for (int i = 0; i < codeLength; i++)
+		for (int j = 0; j < codeLength; j++)
+			if (guess[i] == code[j] && i != j)
+			{
+				hint += '+';
+				guess[i] = 'x';
+				code[j] = 'y';
+			}
+	
+	return hint;
 }
 
 void Codebreaker::pruneCodes()
@@ -299,19 +299,19 @@ bool Codebreaker::gameOver(string hint)
 
 bool Codebreaker::validCode(string code)
 {
-    // Bad code length, make user reenter
-    if (code.length() != codeLength)
-        return false;
+	// Bad code length, make user reenter
+	if (code.length() != codeLength)
+		return false;
 
-    // Bad code letters, make user reenter
-    for (int i = 0; i < code.length(); i++)
-        if (code[i] < 'a' || code[i] > 'h')
-            return false;
+	// Bad code letters, make user reenter
+	for (int i = 0; i < code.length(); i++)
+		if (code[i] < 'a' || code[i] > 'h')
+			return false;
 
-    if (!duplicates)
-    	return !checkDuplicates(code);
+	if (!duplicates)
+		return !checkDuplicates(code);
 
-    return true;
+	return true;
 }
 
 
