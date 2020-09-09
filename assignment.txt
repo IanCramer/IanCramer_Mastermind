@@ -1,4 +1,6 @@
-I also just thought of how the game I just made could be turned into an assignment.
+This is for Joanna Lankester. If you are not Joanna Lankester quit looking at shit that doesn't belong to you.
+
+The game I just made could be turned into an assignment.
 
 Give students the majority of the code except for a couple specific pieces and have them implement those specific pieces.
 
