@@ -53,6 +53,9 @@ private:
 
 Mastermind::Mastermind()
 {
+    // Start Random
+    srand(time(NULL));
+    
     // Get Code Length
     codeLength = getCodeLength();
     // Allow Duplicates?
@@ -128,9 +131,7 @@ bool Mastermind::allowDuplicates()
 
 
 string Mastermind::makeCode()
-{
-    srand(time(NULL));
-    
+{   
     string code = "";
     vector<char> letters = mLetters;
 

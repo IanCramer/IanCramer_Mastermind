@@ -10,8 +10,8 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
-#include <map>
 #include <algorithm>
+#include <ctime>
 
 
 
@@ -62,21 +62,24 @@ private:
 	bool checkDuplicates(string code);
 	bool validCode(string code);
 	int calcNumPosCodes();
-
-
-	
-	
-	string makeGuess();
 	string checkGuess(string guess, string code);
-	bool gameOver(string hint);
+	string randCode();
+	bool gameOver();
+
+
 
 	// Brute Force Algorithm
 	bool bruteForce();
 	void genAllCodes();
 	void pruneCodes();
+	string bruteGuess();
+
+
 
 	// Heuristic Algorithm
 	bool heuristic();
+	bool firstGuess();
+	string makeGuess();
 	
 	
 
@@ -91,13 +94,17 @@ private:
 	bool won = false;
 	vector<char> mLetters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
+
+
 	// For Brute Force Algorithm
 	vector<string> possibleCodes;
-	
+
+
 
 	// For Heuristic
-	vector<string> pastHints;
-	vector<string> codePieces;
+	vector<string> guesses;
+	vector<string> eliminated;
+	vector<string> hints;
 
 
 };
@@ -109,6 +116,7 @@ Codebreaker::Codebreaker()
 {
 	// Start Random
 	srand(time(NULL));
+
 	// Get Code Length
 	codeLength = getCodeLength();
 	// Allow Duplicates?
@@ -116,12 +124,15 @@ Codebreaker::Codebreaker()
 	// Get Code
 	mCode = getCode();
 
+	cout << "Here" << endl;
+	
 	// Reasonable problem space, solve by brute force
 	if (calcNumPosCodes() < 25000)
 		won = !bruteForce();
 	// Problem space is too large, heuristic
 	else
 		won = !heuristic();
+	
 
 	if (won)
 		cout << "You win, good game." << endl;
@@ -135,25 +146,27 @@ Codebreaker::Codebreaker()
 int Codebreaker::getCodeLength()
 {
 	string in;
-	
-	while (true)
-	{
-		cout << endl << "Please enter code length (4, 5, 6): ";
-		cin >> in;
-		
-		if (in[0] == '4' || in[0] == '5' || in[0] == '6')
-			return int(in[0]) - '0';
-		
-		cout << "Invalid Code Length" << endl;
-	}
-	
-	return 4;
+    
+    while (true)
+    {
+        cout << endl << "Please enter code length (1 digit integer): ";
+        cin >> in;
+        
+        if (isdigit(in[0]))
+            return int(in[0]) - '0';
+        
+        cout << "Invalid Code Length" << endl;
+    }
+    
+    return 4;
 }
 
 bool Codebreaker::allowDuplicates()
 {
 	if (codeLength > mLetters.size())
 		return true;
+	if (codeLength < 2)
+		return false;
 
 	string in;
 	
@@ -238,45 +251,39 @@ int Codebreaker::calcNumPosCodes()
 	return x;
 }
 
-bool Codebreaker::gameOver(string hint)
+string Codebreaker::randCode()
 {
-	if (hint.length() != codeLength)
-		return false;
+	string code = "";
+    vector<char> letters = mLetters;
 
-	for (int i = 0; i < hint.length(); i++)
-		if (hint[i] != '*')
-			return false;
+    for (int i = 0; i < codeLength; i++)
+    {
+        // Pick a new letter
+        char newLetter = letters[rand() % letters.size()];
+        
+        // Duplicates Not Allowed?
+        if (!duplicates)
+            // Find and remove each new letter from the code building blocks vector
+            letters.erase( find(letters.begin(), letters.end(), newLetter) );
+        
+        // Add new letter to code
+        code += newLetter;
+    }
 
-	return true;
+    return code;
+}
+
+bool Codebreaker::gameOver()
+{
+	return guess == mCode;
 }
 
 
 
 // -------------------- Game Play --------------------
-string Codebreaker::makeGuess()
-{
-	if (!possibleCodes.empty())
-		return possibleCodes[rand() % possibleCodes.size()];
-
-	// Initialize new guess
-	string newGuess = "";
-	if (!codePieces.empty())
-		string newGuess = codePieces[rand() % codePieces.size()];
-
-	// Construct new guess
-	while (newGuess.length() < codeLength)
-	{
-		char newLetter = mLetters[rand() % mLetters.size()];
-		if (duplicates || !is_in(newGuess, newLetter))
-			newGuess = newGuess + newLetter;
-	}
-
-	return newGuess;
-}
-
 string Codebreaker::checkGuess(string guess, string code)
 {
-	string hint;
+	string hint = "";
 
 	// Check correct letters in correct place
 	for (int i = 0; i < codeLength; i++)
@@ -296,7 +303,7 @@ string Codebreaker::checkGuess(string guess, string code)
 				guess[i] = 'x';
 				code[j] = 'y';
 			}
-	
+
 	return hint;
 }
 
@@ -319,17 +326,17 @@ bool Codebreaker::bruteForce()
 {
 	genAllCodes();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 1; i < 11; i++)
 	{
-		guess = makeGuess();
+		guess = bruteGuess();
 
-		cout << "On turn " << i + 1 << " I guessed: " << guess << endl;
+		cout << "On turn " << i << " I guessed: " << guess << endl;
 
 		hint = checkGuess(guess, mCode);
 
 		cout << "You gave me the feedback: " << hint << endl;
 
-		if (gameOver(hint))
+		if (gameOver())
 			return true;
 
 		pruneCodes();
@@ -376,6 +383,13 @@ void Codebreaker::pruneCodes()
 	possibleCodes = nextPossibleCodes;
 }
 
+string Codebreaker::bruteGuess()
+{
+	if (possibleCodes.empty())
+		return randCode();
+	return possibleCodes[rand() % possibleCodes.size()];
+}
+
 
 
 
@@ -383,27 +397,131 @@ void Codebreaker::pruneCodes()
 // Heuristic Algorithm and Hellper Functions
 bool Codebreaker::heuristic()
 {
-	int numAllCodes = calcNumPosCodes();
-	int numCodesLeft = numAllCodes;
+	if (firstGuess())
+		return true;
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 2; i < 11; i++)
 	{
-		guess = makeGuess();
+		cout << endl;
 
-		cout << "On turn " << i + 1 << " I guessed: " << guess << endl;
+		guess = makeGuess(); cout << endl;
+		cout << "On turn " << i << " I guessed: \t\t" << guess << endl;
 
 		hint = checkGuess(guess, mCode);
+		hints.push_back(hint);
+		cout << "You gave me the feedback: \t" << hint << endl;
 
-		cout << "You gave me the feedback: " << hint << endl;
-
-		if (gameOver(hint))
+		if (gameOver())
 			return true;
 	}
 
 	return false;
 }
 
+bool Codebreaker::firstGuess()
+{
+	guess = "";
 
+	if (duplicates)
+		for (int i = 0; i < codeLength; i++)
+			guess += mLetters[i/2];
+	else
+		for (int i = 0; i < codeLength; i++)
+			guess += mLetters[i];
+
+
+	guesses.push_back(guess);
+	eliminated.push_back(guess);
+	cout << "On turn 1 I guessed: \t\t" << guess << endl;
+
+	hint = checkGuess(guess, mCode);
+	hints.push_back(hint);
+	cout << "You gave me the feedback: \t" << hint << endl;
+
+	return gameOver();
+}
+
+string Codebreaker::makeGuess()
+{
+	// Make sure the computer doesn't take too long coming up with a guess
+	clock_t start;
+	double duration;
+	double timeLimit = codeLength/4. + guesses.size();
+	if (!duplicates)
+		timeLimit = timeLimit/2.;
+
+	// Is the newGuess a possible match for the code?
+	bool success = false;
+
+	// Guesses can be scored based on close they might be to the code
+	// This is used for determining the best guess if time runs out.
+	int bestScore = 0;
+	int newScore = 0;
+
+	// Space to save new and best guesses
+	string newGuess;
+	string bestGuess = randCode();
+
+	// Let's make a guess, start timing
+	start = clock();
+	while (!success)
+	{
+		// Come up with a new guess
+		newGuess = randCode();
+		// Assume it will work
+		success = true;
+
+		// Check the new guess hasn't already been eliminated
+		if (is_in(eliminated, newGuess))
+		{
+			// If it has, the new guess is not a success.
+			success = false;
+			// skip to next new guess
+			continue;
+		}
+
+		// Watch the time. If time limit reached, return the best guess
+		duration = (clock() - start) / (double) CLOCKS_PER_SEC;
+		if (duration > timeLimit)
+		{
+			guesses.push_back(bestGuess);
+			return bestGuess;
+		}
+
+		// THIS IS THE IMPORTANT PART
+		// Check the new guess is a potential code from previous guesses
+		for (int i = 0; i < guesses.size(); i++)
+		{
+			// What would the hint have been for a previous guess if the new guess was the code?
+			string mockHint = checkGuess(guesses[i], newGuess);
+
+			// Score the new guess
+			newScore = i;
+
+			// If it's not the same hint a previous guess received...
+			if (mockHint != hints[i])
+			{
+				// That guess is not a success
+				success = false;
+				// And should be eliminated as an option
+				eliminated.push_back(newGuess);
+				// No  need to check if the new guess would have been valid for other previous guesses.
+				break;
+			}		
+		}
+
+		// If the new score is better than the best so far, save that guess
+		if (newScore > bestScore)
+		{
+			bestScore = newScore;
+			bestGuess = newGuess;
+		}
+	}
+
+	guesses.push_back(newGuess);
+	eliminated.push_back(newGuess);
+	return newGuess;
+}
 
 
 
