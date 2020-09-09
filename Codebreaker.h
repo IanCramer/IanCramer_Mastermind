@@ -10,11 +10,33 @@
 #include <cstdlib>
 #include <cmath>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 
 
 using namespace std;
+
+
+
+// p stands for primitive
+template <typename p>
+bool is_in(vector<p> v, p x)
+{
+	for (int i = 0; i < v.size(); i++)
+		if (v[i] == x)
+			return true;
+
+	return false;
+}
+
+bool is_in(string s, char c)
+{
+	for (int i = 0; i < s.length(); i++)
+		if (s[i] == c)
+			return true;
+	return false;
+}
 
 
 
@@ -31,77 +53,85 @@ public:
 
 private:
 	// Member Functions
+
+	// Gettinc Setup
 	bool allowDuplicates();
 	int getCodeLength();
 	string getCode();
 
-
-	void generateAllCodes();
-	void pruneCodes();
 	bool checkDuplicates(string code);
-	string firstGuess();
+	bool validCode(string code);
+	int calcNumPosCodes();
+
+
+	
+	
 	string makeGuess();
 	string checkGuess(string guess, string code);
 	bool gameOver(string hint);
-	bool validCode(string code);
-	int calcNumPosCodes();
+
+	// Brute Force Algorithm
+	bool bruteForce();
+	void genAllCodes();
+	void pruneCodes();
+
+	// Heuristic Algorithm
+	bool heuristic();
+	
+	
 
 
 
 	// Member Variables
 	int codeLength;
 	bool duplicates;
-	vector<char> mLetters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-	vector<string> possibleCodes;
+	string mCode;
 	string guess;
 	string hint;
-	string mCode;
 	bool won = false;
+	vector<char> mLetters = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
+	// For Brute Force Algorithm
+	vector<string> possibleCodes;
+	
+
+	// For Heuristic
+	vector<string> pastHints;
+	vector<string> codePieces;
 
 
 };
 
 
+
+// Constructor
 Codebreaker::Codebreaker()
 {
+	// Start Random
+	srand(time(NULL));
 	// Get Code Length
 	codeLength = getCodeLength();
 	// Allow Duplicates?
 	duplicates = allowDuplicates();
-	// Calculate Number of Possible Codes
-	cout << "Number of Possible Codes: " << calcNumPosCodes() << endl;
 	// Get Code
 	mCode = getCode();
-	// Generate All Codes
-	generateAllCodes();
 
-	// Start Guessing
-	for (int i = 0; i < 10; i++)
-	{
-		guess = makeGuess();
-
-		cout << "On turn " << i + 1 << " I guessed: " << guess << endl;
-
-		hint = checkGuess(guess, mCode);
-
-		cout << "You gave me the feedback: " << hint << endl;
-
-		pruneCodes();
-
-		if (gameOver(hint))
-		{
-			won = true;
-			break;
-		}
-	}
+	// Reasonable problem space, solve by brute force
+	if (calcNumPosCodes() < 25000)
+		won = !bruteForce();
+	// Problem space is too large, heuristic
+	else
+		won = !heuristic();
 
 	if (won)
-		cout << "Haha sucker, I broke your code!" << endl;
-	else
 		cout << "You win, good game." << endl;
+	else
+		cout << "Haha sucker, I broke your code!" << endl;
 }
 
+
+
+// -------------------- Getting Set Up --------------------
 int Codebreaker::getCodeLength()
 {
 	string in;
@@ -122,11 +152,8 @@ int Codebreaker::getCodeLength()
 
 bool Codebreaker::allowDuplicates()
 {
-	if (codeLength > 4)
-	{
-		cout << "Duplicates will not be allowed as the problem space will become too large." << endl;
-		return false;
-	}
+	if (codeLength > mLetters.size())
+		return true;
 
 	string in;
 	
@@ -162,10 +189,155 @@ string Codebreaker::getCode()
 	return in;
 }
 
+bool Codebreaker::validCode(string code)
+{
+	// Bad code length, make user reenter
+	if (code.length() != codeLength)
+		return false;
+
+	// Bad code letters, make user reenter
+	for (int i = 0; i < code.length(); i++)
+		if (code[i] < 'a' || code[i] > 'h')
+			return false;
+
+	if (!duplicates)
+		return !checkDuplicates(code);
+
+	return true;
+}
+
+// This function checks for invalid duplicates in a mastermind code
+bool Codebreaker::checkDuplicates(string code)
+{
+	// If duplicates are allowed, don't bother checking, just return false
+	if (duplicates)
+		return false;
+
+	// If duplicates not allowed, check for duplicates
+	for (int i = 0; i < code.length(); i++)
+		for (int j = i + 1; j < code.length(); j++)
+			if (code[i] == code[j])
+				// Illegal duplicate found
+				return true;
+
+	// No duplicates found
+	return false;
+}
+
+int Codebreaker::calcNumPosCodes()
+{
+	int x = 1;
+
+	if (duplicates)
+		return pow(8, codeLength);
+
+	// Note that if codeLength > mLetters.size(), duplicates will be allowed and this code will not be run.
+	for (int i = codeLength; i > mLetters.size() - codeLength; i--)
+		x = x * i;
+
+	return x;
+}
+
+bool Codebreaker::gameOver(string hint)
+{
+	if (hint.length() != codeLength)
+		return false;
+
+	for (int i = 0; i < hint.length(); i++)
+		if (hint[i] != '*')
+			return false;
+
+	return true;
+}
 
 
 
-void Codebreaker::generateAllCodes()
+// -------------------- Game Play --------------------
+string Codebreaker::makeGuess()
+{
+	if (!possibleCodes.empty())
+		return possibleCodes[rand() % possibleCodes.size()];
+
+	// Initialize new guess
+	string newGuess = "";
+	if (!codePieces.empty())
+		string newGuess = codePieces[rand() % codePieces.size()];
+
+	// Construct new guess
+	while (newGuess.length() < codeLength)
+	{
+		char newLetter = mLetters[rand() % mLetters.size()];
+		if (duplicates || !is_in(newGuess, newLetter))
+			newGuess = newGuess + newLetter;
+	}
+
+	return newGuess;
+}
+
+string Codebreaker::checkGuess(string guess, string code)
+{
+	string hint;
+
+	// Check correct letters in correct place
+	for (int i = 0; i < codeLength; i++)
+		if (guess[i] == code[i])
+		{
+			hint += '*';
+			guess[i] = 'x';
+			code[i] = 'y';
+		}
+	
+	// Check correct letters in the wrong place
+	for (int i = 0; i < codeLength; i++)
+		for (int j = 0; j < codeLength; j++)
+			if (guess[i] == code[j] && i != j)
+			{
+				hint += '-';
+				guess[i] = 'x';
+				code[j] = 'y';
+			}
+	
+	return hint;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Brute Force Algorithm and Helper Functions
+bool Codebreaker::bruteForce()
+{
+	genAllCodes();
+
+	for (int i = 0; i < 10; i++)
+	{
+		guess = makeGuess();
+
+		cout << "On turn " << i + 1 << " I guessed: " << guess << endl;
+
+		hint = checkGuess(guess, mCode);
+
+		cout << "You gave me the feedback: " << hint << endl;
+
+		if (gameOver(hint))
+			return true;
+
+		pruneCodes();
+	}
+	return false;
+}
+
+void Codebreaker::genAllCodes()
 {
 	vector<string> codes = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
@@ -190,85 +362,6 @@ void Codebreaker::generateAllCodes()
 	}
 }
 
-
-bool Codebreaker::checkDuplicates(string code)
-{
-	if (duplicates)
-		return false;
-
-	// If duplicates not allowed, check for duplicates
-	for (int i = 0; i < code.length(); i++)
-		for (int j = i + 1; j < code.length(); j++)
-			if (code[i] == code[j])
-				// Duplicate found
-				return true;
-
-	// No duplicates found
-	return false;
-}
-
-
-string Codebreaker::firstGuess()
-{
-	guess = "abcd";
-	string hint = "";
-	string code = mCode;
-	
-	// Check correct letters in correct place
-	for (int i = 0; i < codeLength; i++)
-		if (guess[i] == code[i])
-		{
-			hint += '*';
-			guess[i] = 'x';
-			code[i] = 'y';
-		}
-	
-	// Check correct letters in the wrong place
-	for (int i = 0; i < codeLength; i++)
-		for (int j = 0; j < codeLength; j++)
-			if (guess[i] == code[j] && i != j)
-			{
-				hint += '+';
-				guess[i] = 'x';
-				code[j] = 'y';
-			}
-	
-	return hint;
-}
-
-string Codebreaker::makeGuess()
-{
-	srand(time(NULL));
-
-	return possibleCodes[rand() % possibleCodes.size()];
-}
-
-string Codebreaker::checkGuess(string guess, string code)
-{
-	string hint;
-
-	// Check correct letters in correct place
-	for (int i = 0; i < codeLength; i++)
-		if (guess[i] == code[i])
-		{
-			hint += '*';
-			guess[i] = 'x';
-			code[i] = 'y';
-		}
-	
-	// Check correct letters in the wrong place
-	for (int i = 0; i < codeLength; i++)
-		for (int j = 0; j < codeLength; j++)
-			if (guess[i] == code[j] && i != j)
-			{
-				hint += '+';
-				guess[i] = 'x';
-				code[j] = 'y';
-			}
-	
-	return hint;
-}
-
 void Codebreaker::pruneCodes()
 {
 	vector<string> nextPossibleCodes;
@@ -284,50 +377,31 @@ void Codebreaker::pruneCodes()
 }
 
 
-bool Codebreaker::gameOver(string hint)
+
+
+
+// Heuristic Algorithm and Hellper Functions
+bool Codebreaker::heuristic()
 {
-	if (hint.length() != codeLength)
-		return false;
+	int numAllCodes = calcNumPosCodes();
+	int numCodesLeft = numAllCodes;
 
-	for (int i = 0; i < hint.length(); i++)
-		if (hint[i] != '*')
-			return false;
+	for (int i = 0; i < 10; i++)
+	{
+		guess = makeGuess();
 
-	return true;
+		cout << "On turn " << i + 1 << " I guessed: " << guess << endl;
+
+		hint = checkGuess(guess, mCode);
+
+		cout << "You gave me the feedback: " << hint << endl;
+
+		if (gameOver(hint))
+			return true;
+	}
+
+	return false;
 }
-
-
-bool Codebreaker::validCode(string code)
-{
-	// Bad code length, make user reenter
-	if (code.length() != codeLength)
-		return false;
-
-	// Bad code letters, make user reenter
-	for (int i = 0; i < code.length(); i++)
-		if (code[i] < 'a' || code[i] > 'h')
-			return false;
-
-	if (!duplicates)
-		return !checkDuplicates(code);
-
-	return true;
-}
-
-
-int Codebreaker::calcNumPosCodes()
-{
-	if (duplicates)
-		return pow(8, codeLength);
-
-	int x = 1;
-	for (int i = 8; i > 8 - codeLength; i--)
-		x = x * i;
-
-	return x;
-}
-
-
 
 
 

@@ -1,5 +1,6 @@
 // Mastermind Game
 // Ian Cramer
+// 7/15/18
 //
 
 #include "Mastermind.h"

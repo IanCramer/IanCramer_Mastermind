@@ -1,5 +1,6 @@
 // Mastermind Game Class Header
 // Ian Cramer
+// 7/15/18
 //
 
 #include <iostream>
@@ -78,7 +79,7 @@ void Mastermind::getRules()
         "You will have 10 attempts to guess the code. "
         "After each guess, the computer will tell you how many letters you have that are in the code and whether they are in the right place. "
         "A '*' indicates one guessed letter is in the code and in the correct place. "
-        "A '+' indicates one guessed letter is in the code but not in the correct place. "
+        "A '-' indicates one guessed letter is in the code but not in the correct place. "
         << endl << endl;
 }
 
@@ -136,7 +137,7 @@ string Mastermind::makeCode()
     for (int i = 0; i < codeLength; i++)
     {
         // Pick a new letter
-        char newLetter = mLetters[rand() % mLetters.size()];
+        char newLetter = letters[rand() % letters.size()];
         
         // Duplicates Not Allowed?
         if (!duplicates)
@@ -182,9 +183,9 @@ void Mastermind::startGame()
     for (int i = 0; i < codeLength; i++)
         cout << mLetters[i];
     cout << "." << endl;
-    cout << "For each letter you've guessed that is in the code I will respond with an asterisk (*) or a hyphen (+)." << endl;
+    cout << "For each letter you've guessed that is in the code I will respond with an asterisk (*) or a hyphen (-)." << endl;
     cout << "A '*' indicates one guessed letter is in the code and in the correct place." << endl;
-    cout << "A '+' indicates one guessed letter is in the code but not in the correct place." << endl;
+    cout << "A '-' indicates one guessed letter is in the code but not in the correct place." << endl;
     cout << "Try to guess it!" << endl;
 }
 
@@ -231,7 +232,7 @@ bool Mastermind::playGame()
             for (int j = 0; j < codeLength; j++)
                 if (guess[i] == code[j] && i != j)
                 {
-                    hint += '+';
+                    hint += '-';
                     guess[i] = 'x';
                     code[j] = 'y';
                 }
