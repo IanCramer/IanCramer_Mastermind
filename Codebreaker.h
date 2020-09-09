@@ -123,15 +123,19 @@ Codebreaker::Codebreaker()
 	duplicates = allowDuplicates();
 	// Get Code
 	mCode = getCode();
-
-	cout << "Here" << endl;
 	
 	// Reasonable problem space, solve by brute force
 	if (calcNumPosCodes() < 25000)
+	{
+		cout << "Brute Force" << endl;
 		won = !bruteForce();
+	}
 	// Problem space is too large, heuristic
 	else
+	{
+		cout << "Heuristic" << endl;
 		won = !heuristic();
+	}
 	
 
 	if (won)
@@ -371,16 +375,15 @@ void Codebreaker::genAllCodes()
 
 void Codebreaker::pruneCodes()
 {
-	vector<string> nextPossibleCodes;
+	vector<string> possibleCodes_;
 	for (int i = 0; i < possibleCodes.size(); i++)
 	{
-		string feedback = checkGuess(guess, possibleCodes[i]);
+		string h = checkGuess(guess, possibleCodes[i]);
 
-		if (feedback == hint)
-			nextPossibleCodes.push_back(possibleCodes[i]);
+		if (h == hint)
+			possibleCodes_.push_back(possibleCodes[i]);
 	}
-
-	possibleCodes = nextPossibleCodes;
+	possibleCodes = possibleCodes_;
 }
 
 string Codebreaker::bruteGuess()
