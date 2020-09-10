@@ -94,11 +94,11 @@ int Mastermind::getCodeLength()
     
     while (true)
     {
-        cout << endl << "Please enter code length (1 digit integer): ";
-        cin >> in;
+        cout << endl << "Please enter code length: ";
+        getline(cin, in);
         
         if (isdigit(in[0]))
-            return int(in[0]) - '0';
+            return stoi(in);
         
         cout << "Invalid Code Length" << endl;
     }
@@ -110,12 +110,17 @@ int Mastermind::getCodeLength()
 
 bool Mastermind::allowDuplicates()
 {
+    if (codeLength > mLetters.size())
+        return true;
+    if (codeLength < 2)
+        return false;
+
     string in;
     
     while (true)
     {
         cout << endl << "Allow Duplicates?" << endl << "1. Yes" << endl << "2. No" << endl;
-        cin >> in;
+        getline(cin, in);
         
         if (in[0] == '1' || tolower(in[0]) == 'y')
             return true;
@@ -182,7 +187,7 @@ void Mastermind::startGame()
     cout << "I've made a code using the letters 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'." << endl
              << "It will look something like: ";
     for (int i = 0; i < codeLength; i++)
-        cout << mLetters[i];
+        cout << mLetters[i % mLetters.size()];
     cout << "." << endl;
     cout << "For each letter you've guessed that is in the code I will respond with an asterisk (*) or a hyphen (-)." << endl;
     cout << "A '*' indicates one guessed letter is in the code and in the correct place." << endl;
