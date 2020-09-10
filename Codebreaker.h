@@ -11,34 +11,12 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include <unordered_set> 
 #include <ctime>
 
 
 
 using namespace std;
-
-
-
-// p stands for primitive
-template <typename p>
-bool is_in(vector<p> v, p x)
-{
-	for (int i = 0; i < v.size(); i++)
-		if (v[i] == x)
-			return true;
-
-	return false;
-}
-
-bool is_in(string s, char c)
-{
-	for (int i = 0; i < s.length(); i++)
-		if (s[i] == c)
-			return true;
-	return false;
-}
-
-
 
 
 
@@ -64,7 +42,7 @@ private:
 	int calcNumPosCodes();
 	string checkGuess(string guess, string code);
 	string randCode();
-	bool gameOver();
+	bool gameOver() { return guess == mCode; }
 
 
 
@@ -103,7 +81,7 @@ private:
 
 	// For Heuristic
 	vector<string> guesses;
-	vector<string> eliminated;
+	unordered_set<string> eliminated;
 	vector<string> hints;
 
 
@@ -125,7 +103,7 @@ Codebreaker::Codebreaker()
 	mCode = getCode();
 	
 	// Reasonable problem space, solve by brute force
-	if (calcNumPosCodes() < 25000)
+	if (calcNumPosCodes() < 50000000)
 	{
 		cout << "Brute Force" << endl;
 		won = !bruteForce();
@@ -153,11 +131,11 @@ int Codebreaker::getCodeLength()
     
     while (true)
     {
-        cout << endl << "Please enter code length (1 digit integer): ";
-        cin >> in;
+        cout << endl << "Please enter code length: ";
+        getline(cin, in);
         
         if (isdigit(in[0]))
-            return int(in[0]) - '0';
+        	return stoi(in);
         
         cout << "Invalid Code Length" << endl;
     }
@@ -177,7 +155,7 @@ bool Codebreaker::allowDuplicates()
 	while (true)
 	{
 		cout << endl << "Allow Duplicates?" << endl << "1. Yes" << endl << "2. No" << endl;
-		cin >> in;
+		getline(cin, in);
 		
 		if (in[0] == '1' || tolower(in[0]) == 'y')
 			return true;
@@ -197,7 +175,7 @@ string Codebreaker::getCode()
 	while (true)
 	{
 		cout << "Enter Your Code: ";
-		cin >> in;
+		getline(cin, in);
 
 		if ( validCode(in) )
 			break;
@@ -243,10 +221,10 @@ bool Codebreaker::checkDuplicates(string code)
 
 int Codebreaker::calcNumPosCodes()
 {
-	int x = 1;
-
 	if (duplicates)
-		return pow(8, codeLength);
+		return pow(mLetters.size(), codeLength);
+
+	int x = 1;
 
 	// Note that if codeLength > mLetters.size(), duplicates will be allowed and this code will not be run.
 	for (int i = codeLength; i > mLetters.size() - codeLength; i--)
@@ -275,11 +253,6 @@ string Codebreaker::randCode()
     }
 
     return code;
-}
-
-bool Codebreaker::gameOver()
-{
-	return guess == mCode;
 }
 
 
@@ -348,44 +321,59 @@ bool Codebreaker::bruteForce()
 	return false;
 }
 
+// Generate All the Possible Codes
 void Codebreaker::genAllCodes()
 {
-	vector<string> codes = {"a", "b", "c", "d", "e", "f", "g", "h"};
+	vector<string> codes = {""};
+	int n = 0;
 
-	for (int k = 0; k < codeLength - 1; k++)
+	for (int k = 0; k < codeLength; k++)
 	{
-		int n = codes.size();
-		for (int i = 0; i < n; i++)
+		int i = n;
+		n = codes.size();
+		for (; i < n; i++)
 		{
 			for (int j = 0; j < mLetters.size(); j++)
 			{
+				// Build code
 				string newCode = codes[i] + mLetters[j];
-				if (checkDuplicates(newCode) || count(codes.begin(), codes.end(), newCode))
+
+				// Check for duplicates in the code construct so far
+				if (checkDuplicates(newCode))
 					continue;
+
+				// Is the code fully built? Add it to the final collection of codes
 				if (newCode.length() == codeLength)
 					possibleCodes.push_back(newCode);
+
+				// It is valid, hasn't been made yet, and isn't complete: store it to conitnue building on later
 				else
 					codes.push_back(newCode);
-
 			}
-			
 		}
 	}
 }
 
+// Prune Codes
+// Determine which of the set of all possible codes are still possibilities
 void Codebreaker::pruneCodes()
 {
-	vector<string> possibleCodes_;
+	vector<string> stillPossible;
 	for (int i = 0; i < possibleCodes.size(); i++)
 	{
+		// Compare the last guess to each possible code to see what hint would have been given if that possible code was the actual code
 		string h = checkGuess(guess, possibleCodes[i]);
 
+		// If the current possible code would have given the same hint as the actual hint
 		if (h == hint)
-			possibleCodes_.push_back(possibleCodes[i]);
+			// keep that code as a possibility
+			stillPossible.push_back(possibleCodes[i]);
 	}
-	possibleCodes = possibleCodes_;
+	// Reset possible codes to the ones that are still possible
+	possibleCodes = stillPossible;
 }
 
+// Pick a random still possible code
 string Codebreaker::bruteGuess()
 {
 	if (possibleCodes.empty())
@@ -408,6 +396,7 @@ bool Codebreaker::heuristic()
 		cout << endl;
 
 		guess = makeGuess(); cout << endl;
+		guesses.push_back(guess);
 		cout << "On turn " << i << " I guessed: \t\t" << guess << endl;
 
 		hint = checkGuess(guess, mCode);
@@ -434,7 +423,7 @@ bool Codebreaker::firstGuess()
 
 
 	guesses.push_back(guess);
-	eliminated.push_back(guess);
+	eliminated.insert(guess);
 	cout << "On turn 1 I guessed: \t\t" << guess << endl;
 
 	hint = checkGuess(guess, mCode);
@@ -475,7 +464,7 @@ string Codebreaker::makeGuess()
 		success = true;
 
 		// Check the new guess hasn't already been eliminated
-		if (is_in(eliminated, newGuess))
+		if (eliminated.find(newGuess) != eliminated.end())
 		{
 			// If it has, the new guess is not a success.
 			success = false;
@@ -486,10 +475,7 @@ string Codebreaker::makeGuess()
 		// Watch the time. If time limit reached, return the best guess
 		duration = (clock() - start) / (double) CLOCKS_PER_SEC;
 		if (duration > timeLimit)
-		{
-			guesses.push_back(bestGuess);
 			return bestGuess;
-		}
 
 		// THIS IS THE IMPORTANT PART
 		// Check the new guess is a potential code from previous guesses
@@ -507,7 +493,7 @@ string Codebreaker::makeGuess()
 				// That guess is not a success
 				success = false;
 				// And should be eliminated as an option
-				eliminated.push_back(newGuess);
+				eliminated.insert(newGuess);
 				// No  need to check if the new guess would have been valid for other previous guesses.
 				break;
 			}		
@@ -521,8 +507,7 @@ string Codebreaker::makeGuess()
 		}
 	}
 
-	guesses.push_back(newGuess);
-	eliminated.push_back(newGuess);
+	eliminated.insert(newGuess);
 	return newGuess;
 }
 

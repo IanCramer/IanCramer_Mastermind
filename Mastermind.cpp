@@ -11,14 +11,13 @@ using namespace std;
 int main()
 {
     string in;
-    
-    
+
     
     while (true)
     {
         cout << endl << "Would you like to play a game of Mastermind?" << endl;
         cout << "1. Yes" << endl << "2. No" << endl << "3. What are the rules?" << endl;
-        cin >> in;
+        getline(cin, in);
         
         // Would user like to play?
         // No
@@ -44,7 +43,7 @@ int main()
             cout << "1. Code Breaker" << endl;
             cout << "2. Code Maker" << endl;
 
-            cin >> in;
+            getline(cin, in);
 
             if (isdigit(in[0]))
                 role = int(in[0]) - '0';
